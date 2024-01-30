@@ -10,6 +10,7 @@
 #include <fmt/core.h>
 
 #include <cmath>
+#include <concepts>
 #include <iosfwd>
 #include <numbers>
 #include <optional>
@@ -21,13 +22,22 @@
 
 namespace dvlab {
 
-class Rational;
-
+/**
+ * @brief Defines the number types that can multiply/divide with Phase
+ *
+ * @tparam T
+ */
 template <typename T>
 concept unitless = requires(T t) {
     std::is_arithmetic_v<T> == true || std::same_as<T, Rational> == true;
 };
 
+/**
+ * @brief Phase class. This class stores the phase in the form of `a*pi/b`,
+ *        where `a` and `b` are integers without common factors. A phase is normalized to (-pi, pi].
+ *        For example, 3*pi/2 will be normalized to -pi/2.
+ *
+ */
 class Phase {
 public:
     using IntegralType = Rational::IntegralType;
@@ -39,7 +49,6 @@ public:
     requires std::floating_point<T>
     Phase(T f, T eps = 1e-4) : _rational(f / std::numbers::pi_v<T>, eps / std::numbers::pi_v<T>) { normalize(); }
 
-    friend std::ostream& operator<<(std::ostream& os, Phase const& p);
     constexpr Phase operator+() const;
     constexpr Phase operator-() const;
 
@@ -64,11 +73,11 @@ public:
 
     template <class T>
     requires std::floating_point<T>
-    constexpr static T phase_to_floating_point(Phase const& p) { return std::numbers::pi_v<T> * Rational::rational_to_floating_point<T>(p._rational); }
+    constexpr static T to_floating_point(Phase const& p) { return std::numbers::pi_v<T> * Rational::rational_to_floating_point<T>(p._rational); }
 
-    constexpr static float phase_to_f(Phase const& p) { return phase_to_floating_point<float>(p); }
-    constexpr static double phase_to_d(Phase const& p) { return phase_to_floating_point<double>(p); }
-    constexpr static long double phase_to_ld(Phase const& p) { return phase_to_floating_point<long double>(p); }
+    constexpr static float to_float(Phase const& p) { return to_floating_point<float>(p); }
+    constexpr static double to_double(Phase const& p) { return to_floating_point<double>(p); }
+    constexpr static long double to_long_double(Phase const& p) { return to_floating_point<long double>(p); }
 
     Rational get_rational() const { return _rational; }
     constexpr IntegralType numerator() const { return _rational.numerator(); }
@@ -245,18 +254,11 @@ constexpr void Phase::normalize() {
 }  // namespace dvlab
 
 template <>
-struct fmt::formatter<dvlab::Phase> {
-    char presentation = 'e';  // Presentation format: 'f' - fixed, 'e' - scientific.
-
+struct fmt::formatter<dvlab::Phase> : public fmt::formatter<std::string_view> {
     constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator {
-        auto it = ctx.begin(), end = ctx.end();
-        if (it != end && (*it == 'f' || *it == 'e')) presentation = *it++;
-        if (it != end && *it != '}') detail::throw_format_error("invalid format");
-        return it;
+        return ctx.begin();
     }
     auto format(dvlab::Phase const& p, format_context& ctx) const -> format_context::iterator {
-        return presentation == 'f'
-                   ? fmt::format_to(ctx.out(), "{}", dvlab::Phase::phase_to_d(p))
-                   : fmt::format_to(ctx.out(), "{}", p.get_print_string());
+        return fmt::format_to(ctx.out(), "{}", p.get_print_string());
     }
 };

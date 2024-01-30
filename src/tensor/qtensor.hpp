@@ -135,10 +135,10 @@ QTensor<T> QTensor<T>::zspider(size_t const& arity, dvlab::Phase const& phase) {
     using namespace std::literals;
     QTensor<T> t = xt::zeros<DataType>(TensorShape(arity, 2));
     if (arity == 0) {
-        t() = 1. + std::exp(1.0i * dvlab::Phase::phase_to_floating_point<T>(phase));
+        t() = 1. + std::exp(1.0i * dvlab::Phase::to_floating_point<T>(phase));
     } else {
         t[TensorIndex(arity, 0)] = 1.;
-        t[TensorIndex(arity, 1)] = std::exp(1.0i * dvlab::Phase::phase_to_floating_point<T>(phase));
+        t[TensorIndex(arity, 1)] = std::exp(1.0i * dvlab::Phase::to_floating_point<T>(phase));
     }
     t._tensor *= _nu_pow(2 - arity);
     return t;
@@ -158,7 +158,7 @@ QTensor<T> QTensor<T>::xspider(size_t const& arity, dvlab::Phase const& phase) {
     QTensor<T> t = xt::ones<QTensor<T>::DataType>(TensorShape(arity, 2));
     QTensor<T> const ket_minus({1. + 0.i, -1. + 0.i});
     QTensor<T> const tmp = tensor_product_pow(ket_minus, arity);
-    t._tensor += tmp._tensor * std::exp(1.0i * dvlab::Phase::phase_to_floating_point<T>(phase));
+    t._tensor += tmp._tensor * std::exp(1.0i * dvlab::Phase::to_floating_point<T>(phase));
     t._tensor /= std::pow(std::sqrt(2), arity);
     t._tensor *= _nu_pow(2 - arity);
     return t;
@@ -195,7 +195,7 @@ template <typename T>
 QTensor<T> QTensor<T>::rxgate(dvlab::Phase const& phase) {
     using namespace std::literals;
     auto t = QTensor<T>::pxgate(phase);
-    t._tensor *= std::exp(-0.5i * dvlab::Phase::phase_to_floating_point<T>(phase));
+    t._tensor *= std::exp(-0.5i * dvlab::Phase::to_floating_point<T>(phase));
     return t;
 }
 
@@ -210,7 +210,7 @@ template <typename T>
 QTensor<T> QTensor<T>::rygate(dvlab::Phase const& phase) {
     using namespace std::literals;
     auto t = QTensor<T>::pygate(phase);
-    t._tensor *= std::exp(-0.5i * dvlab::Phase::phase_to_floating_point<T>(phase));
+    t._tensor *= std::exp(-0.5i * dvlab::Phase::to_floating_point<T>(phase));
     return t;
 }
 
@@ -225,7 +225,7 @@ template <typename T>
 QTensor<T> QTensor<T>::rzgate(dvlab::Phase const& phase) {
     using namespace std::literals;
     auto t = QTensor<T>::pzgate(phase);
-    t._tensor *= std::exp(-0.5i * dvlab::Phase::phase_to_floating_point<T>(phase));
+    t._tensor *= std::exp(-0.5i * dvlab::Phase::to_floating_point<T>(phase));
     return t;
 }
 

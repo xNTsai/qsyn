@@ -45,10 +45,6 @@ std::string Phase::get_print_string() const {
            ((_rational.numerator() != 0) ? "\u03C0" : "") + ((_rational.denominator() != 1) ? ("/" + std::to_string(_rational.denominator())) : "");
 }
 
-std::ostream& operator<<(std::ostream& os, dvlab::Phase const& p) {
-    return os << p.get_print_string();
-}
-
 }  // namespace dvlab
 
 namespace dvlab::argparse {

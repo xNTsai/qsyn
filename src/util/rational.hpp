@@ -16,14 +16,14 @@
 #include <limits>
 #include <numeric>
 
-//--- Rational Numbers ----------------------------------
-// This class maintains the canonicity of stored rational numbers by simplifying the numerator/denominator whenever possible.
-// Rational numbers are not the same as fractions! This class does not support nested fractions or irrational numbers in numerator/denominator.
-// This class implicitly convert floating points to rational approximation when performing arithmetic operations.
-//--- Rational Numbers ----------------------------------
-
 namespace dvlab {
 
+/**
+ * @brief Rational number. This class maintains the canonicity of
+ *        the rational number by reducing the numerator/denominator. For example,
+ *        2/4 will be reduced to 1/2.
+ *
+ */
 class Rational {
 public:
     // Default constructor for two integral type
@@ -33,7 +33,9 @@ public:
     constexpr Rational() {}
     constexpr Rational(IntegralType n) : _numer(n) {}
     constexpr Rational(IntegralType n, IntegralType d) : _numer(n), _denom(d) {
-        assert(d != 0);
+        if (_denom == 0) {
+            throw std::overflow_error("Denominator cannot be 0");
+        }
         reduce();
     }
     // Implicitly use 1 as denominator
@@ -43,13 +45,9 @@ public:
         *this = Rational::to_rational(f, eps);
     }
 
-    // Operator Overloading
-    friend std::ostream& operator<<(std::ostream& os, Rational const& q);
-
+    // Arithmetic operators always preserve the normalities of Rational
     constexpr Rational operator+() const;
     constexpr Rational operator-() const;
-
-    // Arithmetic operators always preserve the normalities of Rational
     constexpr Rational& operator+=(Rational const& rhs);
     constexpr Rational& operator-=(Rational const& rhs);
     constexpr Rational& operator*=(Rational const& rhs);
@@ -76,36 +74,34 @@ public:
         std::numeric_limits<IntegralType>::digits <= std::numeric_limits<FloatingPointType>::digits,
         "IntegralType must have at least as many digits as FloatingPointType");
 
-    template <class T>
-    requires std::floating_point<T>
+    template <std::floating_point T>
     constexpr static T rational_to_floating_point(Rational const& q) { return ((T)q._numer) / q._denom; }
 
     constexpr static float rational_to_f(Rational const& q) { return rational_to_floating_point<float>(q); }
     constexpr static double rational_to_d(Rational const& q) { return rational_to_floating_point<double>(q); }
     constexpr static long double rational_to_ld(Rational const& q) { return rational_to_floating_point<long double>(q); }
 
-    template <class T>
-    requires std::floating_point<T>
+    template <std::floating_point T>
     static Rational to_rational(T f, T eps = 1e-4);
+
+    static Rational _mediant(Rational const& lhs, Rational const& rhs);
 
 private:
     double _numer = 0;
     double _denom = 1;
-    static Rational _mediant(Rational const& lhs, Rational const& rhs);
 };
 
-template <class T>
-requires std::floating_point<T>
+template <std::floating_point T>
 Rational Rational::to_rational(T f, T eps) {
     auto integral_part = gsl::narrow_cast<IntegralType>(floor(f));
     f -= integral_part;
     Rational lower(0, 1), upper(1, 1);
     Rational med(1, 2);
 
-    auto in_lower_bound = [&f, &eps](Rational const& q) -> bool {
+    auto const in_lower_bound = [&f, &eps](Rational const& q) -> bool {
         return ((f - eps) <= rational_to_floating_point<T>(q));
     };
-    auto in_upper_bound = [&f, &eps](Rational const& q) -> bool {
+    auto const in_upper_bound = [&f, &eps](Rational const& q) -> bool {
         return ((f + eps) >= rational_to_floating_point<T>(q));
     };
 

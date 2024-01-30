@@ -2,13 +2,13 @@ all: build
 
 build:
 	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-	$(MAKE) -C build
+	$(MAKE) -C build qsyn
 
 # force macos to use the clang++ installed by brew instead of the default one
 # which is outdated
 build-clang++:
 	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1 $(shell which clang++)
-	$(MAKE) -C build
+	$(MAKE) -C build qsyn
 
 # build the current source code in the docker container
 build-docker:
@@ -16,7 +16,13 @@ build-docker:
 
 # run the binary you built with `make build-docker`
 run-docker:
-	docker run -it --rm -v $(shell pwd):/workdir qsyn-local 
+	docker run -it --rm -v $(shell pwd):/workdir qsyn-local
+
+# build and run the unit tests
+unit-test:
+	cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+	$(MAKE) -C build qsyn-test
+	./qsyn-test
 
 # run all tests with current qsyn binary at the root of the project
 # use ./scripts/RUN_TESTS to run tests with specific dofiles
@@ -43,6 +49,7 @@ publish:
 clean:
 	rm -rf build
 	rm -f qsyn
+	rm -f qsyn-test
 
 clean-docker:
 	docker container prune -f

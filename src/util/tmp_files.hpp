@@ -43,17 +43,21 @@ private:
 
 class TmpFile {
 public:
-    TmpFile() : _stream{detail::create_tmp_file(std::filesystem::temp_directory_path().string() + "/dvlab-")} {
-        assert(_stream.is_open());
-    }
-    TmpFile(std::string_view prefix) : _stream{detail::create_tmp_file(prefix)} {
-        assert(_stream.is_open());
-    }
+    TmpFile() : _path{detail::create_tmp_file(std::filesystem::temp_directory_path().string() + "/dvlab-")} {}
+    TmpFile(std::string_view prefix) : _path{detail::create_tmp_file(prefix)} {}
+    ~TmpFile() { std::filesystem::remove(_path); }
 
-    std::fstream& stream() { return _stream; }
+    // deletes copy ctors and assignment operators because we don't want to copy the file
+    TmpFile(TmpFile const&)            = delete;
+    TmpFile& operator=(TmpFile const&) = delete;
+
+    TmpFile(TmpFile&&)            = default;
+    TmpFile& operator=(TmpFile&&) = default;
+
+    std::filesystem::path path() const { return _path; }
 
 private:
-    std::fstream _stream;
+    std::filesystem::path _path;
 };
 
 }  // namespace utils

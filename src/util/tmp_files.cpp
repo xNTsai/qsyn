@@ -13,6 +13,8 @@
 #include <cerrno>
 #include <cstring>
 
+#include "util/util.hpp"
+
 namespace dvlab {
 
 namespace utils {
@@ -57,7 +59,10 @@ std::filesystem::path create_tmp_dir(std::string_view prefix) {
 std::filesystem::path create_tmp_file(std::string_view prefix) {
     char* name_template = new char[prefix.size() + 7];  // 6 for the Xs, 1 for null terminator
     prefix.copy(name_template, prefix.size());
-    for (int i = 0; i < 6; i++) name_template[prefix.size() + i] = 'X';  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic) : `name_template` is guaranteed to have enough space
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic) : `name_template` is guaranteed to have enough space
+    for (int i = 0; i < 6; i++) name_template[prefix.size() + i] = 'X';
+    name_template[prefix.size() + 6] = '\0';
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     [[maybe_unused]] auto _ = mkstemp(name_template);
 
